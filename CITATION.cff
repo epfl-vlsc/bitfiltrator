@@ -1,0 +1,82 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  Bitfiltrator: A general approach for
+  reverse-engineering Xilinx bitstream formats
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Sahand
+    email: sahand.kashani@epfl.ch
+    affiliation: EPFL
+    family-names: Kashani
+  - given-names: Mahyar
+    family-names: Emami
+    email: mahyar.emami@epfl.ch
+    affiliation: EPFL
+  - given-names: James
+    name-particle: R.
+    family-names: Larus
+    email: james.larus@epfl.ch
+    affiliation: EPFL
+repository-code: 'https://github.com/epfl-vlsc/bitfiltrator'
+abstract: >-
+  As the usage of FPGAs spreads, engineers will
+  inevitably employ them in ways unforeseen—or
+  unwanted—by their manufacturers.
+
+  Xilinx’s toolchains offer multiple points for
+  customizing the FPGA compilation flow, but all
+  flows must end with Vivado as it is the only tool
+  capable of generating the bitstream to program an
+  FPGA.
+
+  Xilinx does not document its bitstream format, so
+  users who wish to bypass Vivado and modify a
+  bitstream directly must reverse-engineer it to
+  discover the location and format of cells.
+
+
+  Prior work has reverse-engineered parts of the
+  bitstream format for security or
+  debugging/instrumentation activities, but no paper
+  has explained how to do this reverse engineering
+  systematically! Code from prior efforts (when
+  available) is hard- coded to reverse engineer a
+  specific device and is difficult or impossible to
+  use for another one.
+
+  These efforts—focused on applications instead of
+  reverse-engineering—compel engineers who need to
+  modify a bitstream to rediscover unwritten
+  practice.
+
+  Our work bridges this gap by explaining: (1) the
+  various parameters needed to navigate a bitstream
+  correctly, (2) the experiments to obtain them, and
+  (3) the many pitfalls and erroneous assumptions to
+  avoid while undertaking this endeavor.
+
+  We demonstrate our technique by using it to extract
+  the bitstream format of initial LUT equations,
+  LUTRAM contents, BRAM contents, and register values
+  in Xilinx UltraScale and UltraScale+ FPGAs.
+
+  Our methods are implemented in an open-source tool,
+  Bitfiltrator [1], that can extract device layouts
+  and architecture- specific bitstream formats for
+  these cells automatically and without physical
+  access to an FPGA.
+keywords:
+  - Xilinx
+  - Bitstream
+  - Reverse Engineering
+  - UltraScale
+  - UltraScale+
+license: MIT
+version: '1.0'
+date-released: '2022-08-30'
