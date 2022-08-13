@@ -8,7 +8,9 @@ from arch_names import ArchName
 from arch_summary import ArchSummary
 from device_summary import DeviceSummary
 
-RESOURCES_DIR = Path(__file__).parent.resolve() / "resources"
+# We want the resources to be at the same level as the README in the repository, hence why
+# there are two calls to `parent`.
+RESOURCES_DIR = Path(__file__).parent.parent.resolve() / "resources"
 RESOURCES_DIR.mkdir(parents=True, exist_ok=True)
 
 DEVICE_SUMMARY_DIR = RESOURCES_DIR / "devices"
@@ -30,7 +32,7 @@ _device_summaries: dict[str, DeviceSummary] = dict()
 # ArchName -> ArchSummary
 _arch_summaries: dict[ArchName, ArchSummary] = dict()
 
-def load_part_files():
+def load_part_files() -> None:
   # Parses a file containing all known FPGA parts. Associates each FPGA part with
   # its device name and architecture name.
   #
@@ -70,8 +72,7 @@ def load_part_files():
     return part_deviceArch
 
 
-  # Done so the resources are just loaded once and not repetitively in multiple places.
-  # Otherwise it is a performance killer in inner loops.
+  # Done so the resources are just loaded once and not repetitively in multiple places (they are heavy).
   global _parts_all_db
   global _parts_webpack_db
 

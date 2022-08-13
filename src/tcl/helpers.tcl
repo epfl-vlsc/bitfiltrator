@@ -1,3 +1,5 @@
+# author: Sahand Kashani <sahand.kashani@epfl.ch>
+
 # Returns the min/max SLR indices.
 proc get_slr_index_boundaries { } {
   set slrs [get_slrs]

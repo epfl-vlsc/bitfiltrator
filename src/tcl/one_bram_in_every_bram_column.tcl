@@ -1,10 +1,12 @@
+# author: Sahand Kashani <sahand.kashani@epfl.ch>
+
 # To call this script, use the following command:
 #
-#   vivado -mode batch -source one_ff_in_every_clb_column.tcl -notrace -tclargs <fpga_part> <bitstream_out>
+#   vivado -mode batch -source one_bram_in_every_clb_column.tcl -notrace -tclargs <fpga_part> <bitstream_out>
 #
 # Example:
 #
-#   vivado -mode batch -source one_ff_in_every_clb_column.tcl -notrace -tclargs xcu250-figd2104-2L-e output.bit
+#   vivado -mode batch -source one_bram_in_every_clb_column.tcl -notrace -tclargs xcu250-figd2104-2L-e output.bit
 #
 # The outputs of this script are 3 files:
 #   - <bitstream_out>
@@ -17,16 +19,15 @@ source [file join [file dirname [info script]] helpers.tcl]
 
 set script_path [file dirname [file normalize [info script]]]
 
-# Enumerates all candidate registers that should be used in the design IN ORDER. These registers are the bottom-most
-# register (AFF) in the bottom-most SLICE of every CLB column.
-proc get_candidate_regs {} {
-  puts "Enumerating registers"
+# Enumerates all candidate BRAMs that should be used in the design IN ORDER. These BRAMs are the bottom-most
+# BRAMs (RAMB18_X<x>Y<y>, where Y is the smallest in its clock region) in every BRAM column.
+proc get_candidate_brams {} {
+  puts "Enumerating BRAMs"
 
   # Empty list we will populate.
-  set saved_reg_locs {}
+  set saved_bram_locs {}
 
-  set reg_site_pattern "SLICE_X(\\d+)Y(\\d+)"
-  set reg_bel_pattern "${reg_site_pattern}/(\[ABCDEFGH\]FF2?)"
+  set bram18_site_pattern "RAMB18_X(\\d+)Y(\\d+)"
 
   # Get the min/max SLR indices.
   lassign [get_slr_index_boundaries] min_slr_idx max_slr_idx
@@ -59,6 +60,7 @@ proc get_candidate_regs {} {
         # some clock regions are taken up by hard processors. These processors are not visible in the
         # floorplan and are not returned as tiles when querying the contents of the clock region.
         if { [llength ${cr_tiles}] > 0 } {
+
           # Get the min/max col index for the tiles in the clock region.
           lassign [get_clock_region_tile_col_boundaries ${clock_region}] min_tile_col_idx max_tile_col_idx
 
@@ -71,64 +73,79 @@ proc get_candidate_regs {} {
             # in what follows, so we use "quiet" here to remove the warning.
             set tiles [get_tiles -quiet -of_objects ${clock_region} -filter "COLUMN == ${tile_col_idx}"]
 
-            # Keep bels that correspond to SLICEs. We again use -quiet to avoid warnings
-            # since we explicitly handle the case where there are no bels below.
-            set bels [get_bels -quiet -of_objects ${tiles} -regexp ${reg_bel_pattern}]
+            # Keep sites that correspond to BRAMs. We again use -quiet to avoid warnings
+            # since we explicitly handle the case where there are no sites below.
+            set sites [get_sites -quiet -of_objects ${tiles} -regexp ${bram18_site_pattern}]
 
-            if { [llength ${bels}] > 0 } {
-              # Select the reg bel with the smallest Y coordinate. We can sort the bels and select
-              # the first one using `lsort -dictionary {list}` as all bels have names like "SLICE_X(\d+)Y(\d+)/([ABCDEFGH]FF2?)"
-              # and the X coordinate is identical between all entries (they are in the same column). The
-              # entries will therefore be sorted by their Y-value.
-              set bels_sorted [lsort -dictionary ${bels}]
-              set bel [lindex ${bels_sorted} 0]
-              # puts "Processing bel ${bel}"
+            if { [llength ${sites}] > 0 } {
+              # Select the BRAM site with the smallest Y coordinate. We can sort the sites and select
+              # the first one using `lsort -dictionary {list}` as all sites have names like "RAMB18_X(\d+)Y(\d+)/<bel>"
+              # and the X coordinate is identical between all entries (they are in the same column). The entries will
+              # therefore be sorted by their Y-value.
+              set sites_sorted [lsort -dictionary ${sites}]
+              set site [lindex ${sites_sorted} 0]
+              # puts "Processing site ${site}"
 
-              # Keep track of the register as the next element of the large ring register we want to create.
-              lappend saved_reg_locs ${bel}
-            }; # non-empty bels
+              # Keep track of the BRAM BEL as the next element of the large BRAM ring we want to create.
+              # Note that Vivado names the BELs obtained by running `[get_bels -of_objects ${site}]` for
+              # a BRAM site as "RAMBFIFO18", not "RAMB18E2" or "FIFO18E2". This is wrong and we cannot use
+              # the bel name "RAMBFIFO18" to successfully place a BRAM. Valid names I have found are
+              # - FIFO18E2 (but only for the bottom 18K BRAM)
+              # - RAMB18E2_L (when Y is an even number)
+              # - RAMB18E2_U (when Y is an odd number)
+              # I therefore manually place "RAMB18E2_L" after the "/" that separates the site name from
+              # the BEL inside it as I couldn't get vivado to programmatically generate the correct names.
+              # lappend saved_bram_locs "${site}/RAMB18E2_L"
+
+              # Note that one should use a BEL when placing a cell, but you csn use a SITE if there is
+              # only 1 way (i.e. 1 BEL) where the cell can be placed in the site. This is the case for
+              # a 18K BRAM, so I just return the name of the site instead of that of a hard-coded BEL.
+              lappend saved_bram_locs ${site}
+            }; # non-empty sites
           }; # clock region tile column idx
         }; # clock region empty?
       }; # clock region col idx
     }; # clock region row idx
   }; # SLR
 
-  return ${saved_reg_locs}
+  return ${saved_bram_locs}
 }
 
 proc main { fpga_part bitstream_out_name } {
   # We create an in-memory project to avoid having something written to disk at the current working directory.
-  create_project "one_ff_in_every_clb_column" -in_memory -part ${fpga_part}
+  create_project "one_bram_in_every_clb_column" -in_memory -part ${fpga_part}
   # We create an "I/O Planning Project" so we don't need to run implementation to be able to open the device for inspection.
   set_property DESIGN_MODE PinPlanning [current_fileset]
   # Many commands below only work on an open design.
   open_io_design -name io_1
 
-  # We first need to know how wide the ring register should be. This is why we used an "I/O Planning Project" as it
+  # We first need to know how wide the ring BRAM should be. This is why we used an "I/O Planning Project" as it
   # allows us to open the device for inspection. The normal "RTL" mode does not let us do this without synthesizing a
   # design first to have a design we can "open".
-  set reg_locs [get_candidate_regs]
-  set num_regs [llength ${reg_locs}]
+  set bram_sites [get_candidate_brams]
+  set num_brams [llength ${bram_sites}]
 
-  puts "Creating ring register of size ${num_regs}"
+  puts "Creating ring BRAM of size ${num_brams}"
 
   set_property DESIGN_MODE RTL [current_fileset]
 
-  # Synthesize a ring register design described in a verilog file. Note that `synth_design` will
+  # Synthesize a ring BRAM design described in a verilog file. Note that `synth_design` will
   # automatically cause the project to transition to a standard "RTL" kernel again.
-  # Though the design itself marks the FDRE cells as DONT_TOUCH, as an extra security we instruct
-  # vivado not to infer SRL-based shift registers. We also don't care about timing at all in this
-  # design, so we disable timing-driven synthesis entirely.
-  read_verilog $::script_path/ring_reg.v
-  synth_design -top ring_reg -no_srlextract -no_timing_driven -generic G_SIZE=${num_regs}
+  # We don't care about timing at all in this design, so we disable timing-driven synthesis entirely.
+  read_verilog $::script_path/ring_bram.v
+  synth_design -top ring_bram -no_timing_driven -generic G_SIZE=${num_brams}
 
   # Note that this design does not require an XDC file as nothing is connected to FPGA pins.
 
-  # Place all registers at the locations we computed before synthesis.
-  foreach idx [struct::list iota ${num_regs}] reg_loc ${reg_locs} {
+  # Place all BRAMs at the locations we computed before synthesis.
+  foreach idx [struct::list iota ${num_brams}] bram_loc ${bram_sites} {
     # The name we query here is the name used in the verilog file.
-    set reg_cell [get_cells "FDRE_gen[${idx}].FDRE_inst"]
-    place_cell ${reg_cell} ${reg_loc}
+    set bram_cell [get_cells "bram_gen[${idx}].RAMB18E2_inst"]
+    # Note that bram_loc is a SITE, not a BEL. However, the site we have chosen can accomodate
+    # our cell in only 1 way, so we let Vivado choose this configuration automatically (unlike
+    # for SLICEs where a register could be placed in multiple places and we need to specify
+    # which one we want explicitly).
+    place_cell ${bram_cell} ${bram_loc}
   }
 
   # # Optimizing the design is not really needed as it is somewhat performed by `synth_design`.

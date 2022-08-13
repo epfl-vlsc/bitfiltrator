@@ -1,3 +1,5 @@
+# author: Sahand Kashani <sahand.kashani@epfl.ch>
+
 # To call this script, use the following command:
 #
 #   vivado -mode batch -source get_parts.tcl -notrace -tclargs [-keep_webpack_only] <arch_name_pattern_regex> <json_out>

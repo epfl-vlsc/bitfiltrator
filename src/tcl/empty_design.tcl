@@ -1,3 +1,5 @@
+# author: Sahand Kashani <sahand.kashani@epfl.ch>
+
 # To call this script, use the following command:
 #
 #   vivado -mode batch -source empty_design.tcl -notrace -tclargs <fpga_part> <dcp_out>

@@ -1,10 +1,12 @@
+# author: Sahand Kashani <sahand.kashani@epfl.ch>
+
 # To call this script, use the following command:
 #
-#   vivado -mode batch -source all_lutrams_in_one_clb_column.tcl -notrace -tclargs <fpga_part> <tile_type> <bitstream_out>
+#   vivado -mode batch -source all_brams_in_one_bram_column.tcl -notrace -tclargs <fpga_part> <bitstream_out>
 #
 # Example:
 #
-#   vivado -mode batch -source all_lutrams_in_one_clb_column.tcl -notrace -tclargs xcu250-figd2104-2L-e CLEM output.bit
+#   vivado -mode batch -source all_brams_in_one_bram_column.tcl -notrace -tclargs xcu250-figd2104-2L-e output.bit
 #
 # The outputs of this script are 3 files:
 #   - <bitstream_out>
@@ -17,27 +19,26 @@ source [file join [file dirname [info script]] helpers.tcl]
 
 set script_path [file dirname [file normalize [info script]]]
 
-proc main { fpga_part tile_type bitstream_out_name } {
+proc main { fpga_part bitstream_out_name } {
   # We create an in-memory project to avoid having something written to disk at the current working directory.
-  create_project "all_lutrams_in_one_clb_column" -in_memory -part ${fpga_part}
+  create_project "all_brams_in_one_bram_column" -in_memory -part ${fpga_part}
   # We create an "I/O Planning Project" so we don't need to run implementation to be able to open the device for inspection.
   set_property DESIGN_MODE PinPlanning [current_fileset]
   # Many commands below only work on an open design.
   open_io_design -name io_1
 
-  set lut_pattern "SLICE_X(\\d+)Y(\\d+)/(\[ABCDEFGH\]6LUT)"
+  set bram18_site_pattern "RAMB18_X(\\d+)Y(\\d+)"
 
   # We first need to know how wide the design should be. This is why we used an "I/O Planning Project" as it
   # allows us to open the device for inspection. The normal "RTL" mode does not let us do this without synthesizing a
   # design first to have a design we can "open".
-  lassign [get_first_col_with_tileType ${tile_type}] - - - - tiles
+  lassign [get_first_col_with_tileType BRAM] - - - - tiles
 
   # We sort the resulting list so we can get all elements in increasing Y-order.
-  set lutrams [lsort -dictionary [get_bels -of_objects ${tiles} -regexp ${lut_pattern}]]
-  # puts ${lutrams}
+  set bram_sites [lsort -dictionary [get_sites -quiet -of_objects ${tiles} -regexp ${bram18_site_pattern}]]
 
-  set g_size [llength ${lutrams}]
-  puts "Creating LUTRAM array of size ${g_size}"
+  set g_size [llength ${bram_sites}]
+  puts "Creating BRAM array of size ${g_size}"
 
   set_property DESIGN_MODE RTL [current_fileset]
 
@@ -45,26 +46,20 @@ proc main { fpga_part tile_type bitstream_out_name } {
   # automatically cause the project to transition to a standard "RTL" kernel again.
   # We also don't care about timing at all in this design, so we disable timing-driven
   # synthesis entirely.
-  read_verilog $::script_path/lutram_array.v
-  synth_design -top lutram_array -no_timing_driven -generic G_SIZE=${g_size}
+  read_verilog $::script_path/bram_array.v
+  synth_design -top bram_array -no_timing_driven -generic G_SIZE=${g_size}
 
   # Note that this design does not require an XDC file as nothing is connected to FPGA pins.
 
-  # Place all cells at the locations we computed before synthesis. Note that care must
-  # be taken when placing LUTRAMs as they cannot be placed in increasing order. Doing so
-  # will result in the following error:
-  #
-  #   ERROR: [Vivado 12-1409] Cannot set loc and bel property of instance(s) lutram_ff_gen[0].lutram_inst/SP
-  #     to bel A6LUT. The slice contains LUT-RAMs but none of them occupy the HLUT. A HLUT RAM is needed to provide write address signals to the rest of the RAM
-  #
-  # I therefore place the cells in descending order so I'm sure to populate the HLUT before any of the other
-  # LUTs are placed.
-  foreach idx [struct::list iota ${g_size}] {
-    set reverse_idx [expr ${g_size} - 1 - ${idx}]
+  # Place all cells at the locations we computed before synthesis.
+  foreach idx [struct::list iota ${g_size}] bram_loc ${bram_sites} {
     # The name we query here is the name used in the verilog file.
-    set lutram_cell [get_cells "lutram_gen[${reverse_idx}].lutram_inst"]
-    set lutram_loc [lindex ${lutrams} ${reverse_idx}]
-    place_cell ${lutram_cell} ${lutram_loc}
+    set bram_cell [get_cells "bram_gen[${idx}].RAMB18E2_inst"]
+    # Note that bram_loc is a SITE, not a BEL. However, the site we have chosen can accomodate
+    # our cell in only 1 way, so we let Vivado choose this configuration automatically (unlike
+    # for SLICEs where a register could be placed in multiple places and we need to specify
+    # which one we want explicitly).
+    place_cell ${bram_cell} ${bram_loc}
   }
 
   # # Optimizing the design is not really needed as it is somewhat performed by `synth_design`.
@@ -100,12 +95,11 @@ proc main { fpga_part tile_type bitstream_out_name } {
 # contains the count of args BEFORE options parsing. Options parsing removes
 # optional args and the length of $::argv is the only way to get an accurate
 # count of the mandatory args that are left behind.
-if { [llength $::argv] != 3 } {
+if { [llength $::argv] != 2 } {
   puts "received mandatory args: $::argv"
-  puts "expected mandatory args: <fpga_part> <tile_type> <bitstream_out>"
+  puts "expected mandatory args: <fpga_part> <bitstream_out>"
 } else {
   set fpga_part [lindex $::argv 0]
-  set tile_type [lindex $::argv 1]
-  set bitstream_out [lindex $::argv 2]
-  main ${fpga_part} ${tile_type} ${bitstream_out}
+  set bitstream_out [lindex $::argv 1]
+  main ${fpga_part} ${bitstream_out}
 }

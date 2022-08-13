@@ -2,7 +2,7 @@
 
 import helpers
 import resources
-from arch_spec import ArchSpec, UltraScaleSpec
+from arch_spec import ArchSpec
 from frame import FrameAddressRegister
 from frame_spec import FarBlockType
 

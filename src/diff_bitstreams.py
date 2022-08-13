@@ -6,7 +6,6 @@ from pathlib import Path
 import numpy as np
 
 import frame as fr
-from arch_spec import ArchSpec
 from bitstream import Bitstream
 from frame import FrameAddressRegister
 

@@ -1,3 +1,5 @@
+# author: Sahand Kashani <sahand.kashani@epfl.ch>
+
 # To call this script, use the following command:
 #
 #   vivado -mode batch -source all_ffs_in_one_clb_column.tcl -notrace -tclargs <fpga_part> <tile_type> <bitstream_out>

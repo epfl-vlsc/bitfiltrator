@@ -1,3 +1,5 @@
+# author: Sahand Kashani <sahand.kashani@epfl.ch>
+
 # To call this script, use the following command:
 #
 #   vivado -mode batch -source sweep_lut_init.tcl -notrace -tclargs <dcp_in> <lut_idx_low> <lut_idx_high> <dir_out>

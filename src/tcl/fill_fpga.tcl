@@ -1,3 +1,5 @@
+# author: Sahand Kashani <sahand.kashani@epfl.ch>
+
 # To call this script, use the following command:
 #
 #   vivado -mode batch -source fill_fpga.tcl -notrace -tclargs <fpga_part> <dcp_out> <design_info_json_out>
