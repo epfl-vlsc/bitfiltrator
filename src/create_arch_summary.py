@@ -393,7 +393,7 @@ def extract_tile_encodings(
 
 # Main program (if executed as script)
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser(description="Creates a summary description of part-specific metrics needed to compute frame addresses.")
+  parser = argparse.ArgumentParser(description="Creates a summary description of arch-specific metrics needed to compute a minor address and a frame offset.")
   parser.add_argument("fpga_part", type=str, help="FPGA part number.")
   parser.add_argument("working_dir", type=str, help="Working directory (for intermediate output files).")
   parser.add_argument("out_json", type=str, help="Output JSON file containing arch summary.")
