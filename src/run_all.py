@@ -144,9 +144,9 @@ def create_filled_bitstream(
 
 # Main program (if executed as script)
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser(description="Reverse engineers Xilinx UltraScale/UltraScale+ bitstream formats.")
+  parser = argparse.ArgumentParser(description="Reverse engineers Xilinx UltraScale/UltraScale+ device and architecture constants for all WebPack FPGAs in your Vivado installation.")
   parser.add_argument("working_dir", type=str, help="Working directory (for intermediate output files).")
-  parser.add_argument("--verify", action="store_true", help="If present, verifies the reverse-engineered parameters. Generates bitstreams with random LUT/FF/BRAM data in the given directory and reconstructs them. This can take ~30m for a single large device!")
+  parser.add_argument("--verify", action="store_true", help="If present, verifies the reverse-engineered parameters after extraction. This involves generating bitstreams with random LUT/FF/BRAM data and reconstructing them. This can take ~30m for a single large device! We recommend using --process_cnt to check multiple bitstreams concurrently.")
   parser.add_argument("--process_cnt", type=int, default=1, help="Joblib parallelism (use -1 to use all cores).")
   args = parser.parse_args()
 
@@ -192,11 +192,16 @@ if __name__ == "__main__":
       joblib.delayed(create_filled_bitstream)(part, verify_path) for part in part_partTargetDir
     )
 
-    joblib.Parallel(
+    check_statuses = joblib.Parallel(
       n_jobs=args.process_cnt,
       verbose=10
     )(
       joblib.delayed(check_state)(bitstream_path, expected_values_json_path) for (bitstream_path, expected_values_json_path) in bitstreamPath_expectedValuesJsonPath_list
     )
+
+    if all(check_statuses):
+      print("All checks passed!")
+    else:
+      print("Some checks failed!")
 
   print("Done")
