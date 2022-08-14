@@ -8,15 +8,60 @@ Bitstream parameters are a series of device- and architecture-specific constants
 
 All extracted parameters are stored in human/machine-readable files. Pre-generated versions of these files are available in the [resources](./resources) directory.
 
-## Main features
+### Demo (locating configuration bits for named BELs)
 
-TODO
+The [demo.py](src/demo.py) file contains a short program that prints out the SLR name, frame addresses, and frame offsets of any LUT, Flip-Flop, and 18K BRAM given as argument.
+
+```python
+╰─❯ python3 demo.py -h
+usage: demo.py [-h] [--luts [LUTS ...]] [--ffs [FFS ...]] [--brams [BRAMS ...]] bitstream
+
+Demo application that locates a resource and prints its SLR name, frame addresses, and frame offsets.
+
+positional arguments:
+  bitstream            Input bitstream (with header). Must be a full bitstream, not a partial one.
+
+options:
+  -h, --help           show this help message and exit
+  --luts [LUTS ...]    Name of LUTs to locate in the form of SLICE_X(\d+)Y(\d+)/[A-H]6LUT
+  --ffs [FFS ...]      Name of Flip-Flops to locate in the form of SLICE_X(\d+)Y(\d+)/[A-H]FF2?
+  --brams [BRAMS ...]  Name of 18K BRAMs to locate in the form of RAMB18_X(\d+)Y(\d+)
+
+╰─❯ python3 demo.py <xcu200.bit> --luts SLICE_X0Y13/B6LUT --ffs SLICE_X0Y13/GFF2 --brams RAMB18_X2Y12
+SLICE_X0Y13/B6LUT
+INIT[ 0] -> SLR0, frame address: 0x00000307 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   7), frame offset:  639
+INIT[ 1] -> SLR0, frame address: 0x00000306 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   6), frame offset:  639
+INIT[ 2] -> SLR0, frame address: 0x00000305 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   5), frame offset:  639
+INIT[ 3] -> SLR0, frame address: 0x00000304 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   4), frame offset:  639
+...
+INIT[62] -> SLR0, frame address: 0x00000305 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   5), frame offset:  624
+INIT[63] -> SLR0, frame address: 0x00000304 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   4), frame offset:  624
+
+SLICE_X0Y13/GFF2
+INIT -> SLR0, frame address: 0x0000030c (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =  12), frame offset:  668
+
+RAMB18_X2Y12
+INIT[    0] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1536
+INIT[    1] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1548
+INIT[    2] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1560
+INIT[    3] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1572
+...
+INIT[16382] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR = 255), frame offset: 1631
+INIT[16383] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR = 255), frame offset: 1643
+INIT_P[    0] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1584
+INIT_P[    1] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1590
+INIT_P[    2] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1587
+INIT_P[    3] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1593
+...
+INIT_P[ 2046] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR = 255), frame offset: 1589
+INIT_P[ 2047] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR = 255), frame offset: 1595
+```
 
 ## Installation
 
 Bitfiltrator is implemented entirely in Python (3.10) and Tcl. The easiest way to use Bitfiltrator is to set up its dependencies using a virtual environment. The instructions below use [conda](https://docs.conda.io/projects/conda/en/latest/) as the virtual environment management system, but you can easily perform a similar setup with other environment managers ([venv](https://docs.python.org/3/tutorial/venv.html), etc.) if you prefer.
 
-Bitfiltrator was developed and tested on *Ubuntu 20.04*. It should run without issues on any machine that has Vivado and Python installed (using `conda` below).
+Bitfiltrator was developed and tested on *Ubuntu 20.04* and *Vivado 2021.1*. It should run without issues on any machine that has Vivado and Python installed (using `conda` below).
 
 ```bash
 # Download and install conda
@@ -82,7 +127,10 @@ For example, the following command creates an architecture summary for the `xazu
 The [run_all.py](./src/run_all.py) program creates device and architecture summaries for *all* WebPack-enabled US/US+ FPGAs available in your local Vivado installation. Note that this requires several GBs of disk space and takes several hours to complete depending on the speed and parallelism of your machine.
 
 ```bash
-╰─❯ rm -rf ./resources/
+╰─❯ rm -f ./resources/parts_all.json
+╰─❯ rm -f ./resources/parts_webpack.json
+╰─❯ rm -f ./resources/archs/
+╰─❯ rm -f ./resources/devices/
 ╰─❯ python3 src/run_all.py --verify <working-dir>
 ```
 

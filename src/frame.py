@@ -82,7 +82,7 @@ class FrameAddressRegister:
     return FrameAddressRegister(reserved, block_type, row_addr, col_addr, minor_addr, spec)
 
   def __str__(self) -> str:
-    return f"BLOCK_TYPE = {self.block_type.name}, ROW_ADDR = {self.row_addr}, COL_ADDR = {self.col_addr}, MINOR_ADDR = {self.minor_addr}"
+    return f"BLOCK_TYPE = {self.block_type.name}, ROW_ADDR = {self.row_addr:>3d}, COL_ADDR = {self.col_addr:>3d}, MINOR_ADDR = {self.minor_addr:>3d}"
 
 class FrameAddressIncrementer:
   def __init__(

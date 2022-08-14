@@ -3,9 +3,9 @@
 import argparse
 from pathlib import Path
 
-import bit_locator
 import helpers
 import resources
+from bit_locator import BitLocator
 from bitstream import Bitstream
 from device_summary import DeviceSummary
 from fpga_resources import Bram, Lut
@@ -109,7 +109,7 @@ def check_state(
   bitstream = Bitstream.from_file_path(bitstream_path)
   assert not bitstream.is_partial(), f"Error: {bitstream} is a partial bitstream!"
 
-  bitlocator = bit_locator.BitLocator(bitstream.header.fpga_part)
+  bitlocator = BitLocator(bitstream.header.fpga_part)
   dev_summary = resources.get_device_summary(bitstream.header.fpga_part)
 
   slrNameFar_frame_dict = extract_frames(bitstream, dev_summary)
