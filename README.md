@@ -61,7 +61,7 @@ INIT_P[ 2047] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW
 
 Bitfiltrator is implemented entirely in Python (3.10) and Tcl. The easiest way to use Bitfiltrator is to set up its dependencies using a virtual environment. The instructions below use [conda](https://docs.conda.io/projects/conda/en/latest/) as the virtual environment management system, but you can easily perform a similar setup with other environment managers ([venv](https://docs.python.org/3/tutorial/venv.html), etc.) if you prefer.
 
-Bitfiltrator was developed and tested on *Ubuntu 20.04* and *Vivado 2021.1*. It should run without issues on any machine that has Vivado and Python installed (using `conda` below).
+Bitfiltrator was developed and tested on *Ubuntu 20.04* and *Vivado 2021.1 / 2022.1*. It should run without issues on any machine that has Vivado and Python installed (using `conda` below).
 
 ```bash
 # Download and install conda

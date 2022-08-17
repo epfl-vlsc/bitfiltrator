@@ -20,6 +20,10 @@ set script_path [file dirname [file normalize [info script]]]
 
 proc dump_lut_info { lut_cell } {
   set lines {}
+
+  # Set random value for initial configuration.
+  set_property "INIT" [rand_n_bit_verilog_number_str 64] ${lut_cell}
+
   # I use `get_bels` instead of `get_sites` as I want the trailing "/[A-H]6LUT"
   set lut_loc [get_bels -of_objects ${lut_cell}]
   lappend lines "\"loc\": \"${lut_loc}\""
@@ -29,6 +33,10 @@ proc dump_lut_info { lut_cell } {
 
 proc dump_ff_info { ff_cell } {
   set lines {}
+
+  # Set random value for initial configuration.
+  set_property "INIT" [rand_n_bit_verilog_number_str 1] ${ff_cell}
+
   # I use `get_bels` instead of `get_sites` as I want the trailing "/[A-H]FF2?"
   set ff_loc [get_bels -of_objects ${ff_cell}]
   lappend lines "\"loc\": \"${ff_loc}\""
@@ -41,6 +49,10 @@ proc dump_bram_parity_info { bram_cell } {
 
   foreach idx [struct::list iota 8] {
     set property_name "INITP_[format %02x ${idx}]"
+
+    # Set random value for initial configuration.
+    set_property ${property_name} [rand_n_bit_verilog_number_str 256] ${bram_cell}
+
     set property_value [get_property ${property_name} ${bram_cell}]
     lappend lines "\"${property_name}\": \"${property_value}\""
   }
@@ -53,6 +65,10 @@ proc dump_bram_memory_info { bram_cell } {
 
   foreach idx [struct::list iota 64] {
     set property_name "INIT_[format %02x ${idx}]"
+
+    # Set random value for initial configuration.
+    set_property ${property_name} [rand_n_bit_verilog_number_str 256] ${bram_cell}
+
     set property_value [get_property ${property_name} ${bram_cell}]
     lappend lines "\"${property_name}\": \"${property_value}\""
   }
@@ -65,6 +81,10 @@ proc dump_bram_reg_info { bram_cell } {
 
   foreach letter {A B} {
     set property_name "INIT_${letter}"
+
+    # Set random value for initial configuration.
+    set_property ${property_name} [rand_n_bit_verilog_number_str 18] ${bram_cell}
+
     set property_value [get_property ${property_name} ${bram_cell}]
     lappend lines "\"${property_name}\": \"${property_value}\""
   }
@@ -141,23 +161,35 @@ proc main { fpga_part dcp_out design_info_json_out } {
   # Many commands below only work on an open design.
   open_io_design -name io_1
 
-  set slice_pattern "SLICE_X(\\d+)Y(\\d+)"
-  set bram_pattern "RAMB18_X(\\d+)Y(\\d+)"
+  set part_info [get_parts ${fpga_part}]
+  set num_regs [get_property "FLIPFLOPS" ${part_info}]
+  set num_luts [get_property "LUT_ELEMENTS" ${part_info}]
+  set num_brams [get_property "BLOCK_RAMS" ${part_info}]
 
-  set slices [lsort -dictionary [get_sites -quiet -regexp ${slice_pattern}]]
-  set num_slices [llength ${slices}]
-
-  # Only take half the BRAMs as vivado sometimes returns more BRAMs that actually
-  # exist on the device. This only happens for a few devices though. Maybe a bug
-  # in Vivado when it is working on restricted devices (devices which are the
-  # same as larger ones, but where some parts are disabled)?
-  set brams [lsort -dictionary [get_sites -quiet -regexp ${bram_pattern}]]
-  set num_brams [expr [llength ${brams}] / 2]
-  set brams [lrange ${brams} 0 ${num_brams}]
-  set num_brams [llength ${brams}]
-
-  puts "Number of slices = ${num_slices}"
+  puts "Number of FFs   = ${num_regs}"
+  puts "Number of LUTs  = ${num_luts}"
   puts "Number of BRAMs = ${num_brams}"
+
+  # Do NOT go over all clock regions and enumerate the LUTs/FFs/BRAMs you want to use
+  # in the design. The reason is doing so on some FPGAs will return MORE LUTS/FFs/BRAMs
+  # than there are "in the device"!
+  # Some devices like the xcau20p and xcau25p are identical in terms of number of
+  # frames and of their type, but the number of brams they have differ (200 vs 300).
+  # You can actually count 960 BRAMs in these devices when you check the floorplan as
+  # there are 10 BRAM columns per major row, 24 18K BRAMs each, 4 major rows = 10 * 24 * 4 = 960.
+  # Even if I assume the "BLOCK_RAMS" property above is the number of 36K BRAMS, that would
+  # give us 10 * 12 * 4 = 480 BRAMs, not 200 or 300. So I the number of BRAMs you can
+  # use it just limited by software and any of the 960 BRAMs are usable, so long as
+  # you don't use more than the software-defined maximu.
+  # Therefore we simply instantiate the maximum number of a given resource and let Vivado
+  # deal with wherever it wants to place them.
+
+  # If we populate all LUTs/FFs in the device, then Vivado doesn't finish P&R even after
+  # multiple hours, so we just restrict the number of LUTs and Vivado will randomly place
+  # the LUTs where it wants. We should in theory be able to instantiate all SLICEs in the
+  # device (minus 1 from the software-defined limit because we use one FF as the "clock"
+  # of the BRAM) on the device if we just waited long enough for Vivado to finish.
+  set num_slices [expr ${num_luts} / 4]
 
   set_property DESIGN_MODE RTL [current_fileset]
 
@@ -171,64 +203,20 @@ proc main { fpga_part dcp_out design_info_json_out } {
 
   # Note that this design does not require an XDC file as nothing is connected to FPGA pins.
 
-  # We populate a single LUT/FF per slice. Which of the ABCDEFGH lut/ff gets used
-  # depends on the Y index of the slice.
-  # This is done as otherwise Vivado never finishes P&R, even after multiple hours.
-  set sliceY_to_letter [dict create 0 "A" 1 "B" 2 "C" 3 "D" 4 "E" 5 "F" 6 "G" 7 "H"]
-  foreach slice ${slices} idx [struct::list iota ${num_slices}] {
-    # The "-" below is because regexp returns the full match first, then the groups
-    # in the regular expression. I don't care about the full match, hence the "-"
-    # to ignore the return value.
-    regexp "SLICE_X(\\d+)Y(\\d+)" ${slice} - x y
-    set y_rel [expr ${y} % 8]
-    set letter [dict get ${sliceY_to_letter} ${y_rel}]
-
-    # The name we query here is the name used in the verilog file.
-    set lut_cell [get_cells "slice_gen[${idx}].lut6_inst"]
-    set ff_cell [get_cells "slice_gen[${idx}].ff_inst"]
-    set lut_loc "${slice}/${letter}6LUT"
-    set ff_loc "${slice}/${letter}FF"
-    place_cell ${lut_cell} ${lut_loc}
-    place_cell ${ff_cell} ${ff_loc}
-
-    # Set random value for initial configuration.
-    set_property "INIT" [rand_n_bit_verilog_number_str 64] ${lut_cell}
-    set_property "INIT" [rand_n_bit_verilog_number_str 1] ${ff_cell}
-  }
-
-  foreach bram ${brams} idx [struct::list iota ${num_brams}] {
-    set bram_cell [get_cells "bram_gen[${idx}].RAMB18E2_inst"]
-    set bram_loc ${bram}
-    place_cell ${bram_cell} ${bram_loc}
-
-    # Set random value for initial configuration.
-    foreach idx [struct::list iota 8] {
-      set property_name "INITP_[format %02x ${idx}]"
-      set_property ${property_name} [rand_n_bit_verilog_number_str 256] ${bram_cell}
-    }
-    foreach idx [struct::list iota 64] {
-      set property_name "INIT_[format %02x ${idx}]"
-      set_property ${property_name} [rand_n_bit_verilog_number_str 256] ${bram_cell}
-    }
-    foreach letter {A B} {
-      set property_name "INIT_${letter}"
-      set_property ${property_name} [rand_n_bit_verilog_number_str 18] ${bram_cell}
-    }
-  }
-
   # # Optimizing the design is not really needed as it is somewhat performed by `synth_design`.
   # opt_design
   place_design
   route_design
 
-  write_checkpoint -force ${dcp_out}
-
-  # Write cell configuration to a file so another file can look for equations/contents in
-  # a bitstream.
+  # Randomize initial configuration of cells and dump to a JSON file.
   set json_str [dump_design_info]
   set file_out [open ${design_info_json_out} w]
   puts ${file_out} [format_json ${json_str}]
   close ${file_out}
+
+  # Write the checkpoint after `dump_design_info` above as we set the initial configuration
+  # of cells there and we need the checkpoint to reflect this new information.
+  write_checkpoint -force ${dcp_out}
 }
 
 # We test the length of $::argv instead of just checking $::argc as $::argc

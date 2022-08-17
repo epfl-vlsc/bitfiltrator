@@ -72,7 +72,7 @@ def run_script(
 
   extension = script_path.suffix
   if extension == ".tcl":
-    cmd = ["vivado", "-mode", "batch", "-source", script_path, "-tclargs", *args]
+    cmd = ["vivado", "-mode", "batch", "-source", script_path, "-notrace", "-tclargs", *args]
   elif extension == ".py":
     cmd = ["python3", script_path, *args]
   else:
@@ -86,9 +86,9 @@ def run_script(
     args_not_available = any((arg is None for arg in args))
     outputs_already_available = all((expected_output_path.exists() for expected_output_path in expected_output_paths))
     # We skip execution if any of the args are not available as vivado occasionally segfaults mid-execution
-    # and our methods return None in such cases. We don't want to launch a future step that depends on a
-    # previous artifact that is not available, so we skip execution in such cases and the user will have to
-    # re-run this script until all artifacts are available.
+    # if it runs out of memory and our methods return None in such cases. We don't want to launch a future
+    # step that depends on a previous artifact that is not available, so we skip execution in such cases and
+    # the user will have to re-run this script until all artifacts are available.
     done = args_not_available or outputs_already_available
 
   # Run command only if results do not exist (otherwise it is duplicated work).
