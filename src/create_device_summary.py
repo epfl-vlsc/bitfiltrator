@@ -526,7 +526,7 @@ if __name__ == "__main__":
   parser.add_argument("out_json", type=str, help="Output JSON file containing device summary.")
   args = parser.parse_args()
 
-  summary = create_device_summary(args.fpga_part, args.working_dir, args.out_json)
+  summary = create_device_summary(args.fpga_part, args.working_dir)
 
   with open(args.out_json, "w") as f:
     json_str = format_json.emit(summary, sort_keys=True)
