@@ -10,7 +10,7 @@ All extracted parameters are stored in human/machine-readable files. Pre-generat
 
 ### Demo (locating configuration bits for named BELs)
 
-The [demo.py](src/demo.py) file contains a short program that prints out the SLR name, frame addresses, and frame offsets of any LUT, Flip-Flop, and 18K BRAM given as argument.
+The [demo.py](src/demo.py) file contains a short program that prints out the SLR name, frame addresses, and frame offsets of any LUT, Flip-Flop, and 18K BRAM given as argument. The demo also prints out the byte offset of each FPGA configuration frame from the start of the bitstream (header included).
 
 ```python
 ╰─❯ python3 demo.py -h
@@ -29,32 +29,32 @@ options:
 
 ╰─❯ python3 demo.py <xcu200.bit> --luts SLICE_X0Y13/B6LUT --ffs SLICE_X0Y13/GFF2 --brams RAMB18_X2Y12
 SLICE_X0Y13/B6LUT
-INIT[ 0] -> SLR0, frame address: 0x00000307 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   7), frame offset:  639
-INIT[ 1] -> SLR0, frame address: 0x00000306 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   6), frame offset:  639
-INIT[ 2] -> SLR0, frame address: 0x00000305 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   5), frame offset:  639
-INIT[ 3] -> SLR0, frame address: 0x00000304 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   4), frame offset:  639
+INIT[ 0] -> SLR0, frame address: 0x00000307 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   7), frame offset:  639, frame byte offset in bitstream: 26754897
+INIT[ 1] -> SLR0, frame address: 0x00000306 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   6), frame offset:  639, frame byte offset in bitstream: 26754525
+INIT[ 2] -> SLR0, frame address: 0x00000305 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   5), frame offset:  639, frame byte offset in bitstream: 26754153
+INIT[ 3] -> SLR0, frame address: 0x00000304 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   4), frame offset:  639, frame byte offset in bitstream: 26753781
 ...
-INIT[62] -> SLR0, frame address: 0x00000305 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   5), frame offset:  624
-INIT[63] -> SLR0, frame address: 0x00000304 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   4), frame offset:  624
+INIT[62] -> SLR0, frame address: 0x00000305 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   5), frame offset:  624, frame byte offset in bitstream: 26754153
+INIT[63] -> SLR0, frame address: 0x00000304 (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =   4), frame offset:  624, frame byte offset in bitstream: 26753781
 
 SLICE_X0Y13/GFF2
-INIT -> SLR0, frame address: 0x0000030c (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =  12), frame offset:  668
+INIT -> SLR0, frame address: 0x0000030c (BLOCK_TYPE = CLB_IO_CLK, ROW_ADDR =   0, COL_ADDR =   3, MINOR_ADDR =  12), frame offset:  668, frame byte offset in bitstream: 26756757
 
 RAMB18_X2Y12
-INIT[    0] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1536
-INIT[    1] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1548
-INIT[    2] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1560
-INIT[    3] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1572
+INIT[    0] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1536, frame byte offset in bitstream: 47909421
+INIT[    1] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1548, frame byte offset in bitstream: 47909421
+INIT[    2] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1560, frame byte offset in bitstream: 47909421
+INIT[    3] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1572, frame byte offset in bitstream: 47909421
 ...
-INIT[16382] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR = 255), frame offset: 1631
-INIT[16383] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR = 255), frame offset: 1643
-INIT_P[    0] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1584
-INIT_P[    1] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1590
-INIT_P[    2] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1587
-INIT_P[    3] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1593
+INIT[16382] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR = 255), frame offset: 1631, frame byte offset in bitstream: 48004281
+INIT[16383] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR = 255), frame offset: 1643, frame byte offset in bitstream: 48004281
+INIT_P[    0] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1584, frame byte offset in bitstream: 47909421
+INIT_P[    1] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1590, frame byte offset in bitstream: 47909421
+INIT_P[    2] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1587, frame byte offset in bitstream: 47909421
+INIT_P[    3] -> SLR0, frame address: 0x01000200 (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR =   0), frame offset: 1593, frame byte offset in bitstream: 47909421
 ...
-INIT_P[ 2046] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR = 255), frame offset: 1589
-INIT_P[ 2047] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR = 255), frame offset: 1595
+INIT_P[ 2046] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR = 255), frame offset: 1589, frame byte offset in bitstream: 48004281
+INIT_P[ 2047] -> SLR0, frame address: 0x010002ff (BLOCK_TYPE = BRAM_CONTENT, ROW_ADDR =   0, COL_ADDR =   2, MINOR_ADDR = 255), frame offset: 1595, frame byte offset in bitstream: 48004281
 ```
 
 ## Installation

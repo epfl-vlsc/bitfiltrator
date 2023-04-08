@@ -38,7 +38,7 @@ def print_lut_info(
   print(f"{lut}")
   for (init_idx, (frame_addr, frame_ofst)) in enumerate(zip(frame_addrs, frame_ofsts)):
     config_frame = slrNameFar_frame_dict[(slr_name, frame_addr)]
-    print(f"INIT[{init_idx:>2d}] -> {slr_name}, frame address: 0x{frame_addr.to_hex()} ({frame_addr}), frame offset: {frame_ofst:>4d}, frame byte ofst in bitstream: {config_frame.byte_ofst}")
+    print(f"INIT[{init_idx:>2d}] -> {slr_name}, frame address: 0x{frame_addr.to_hex()} ({frame_addr}), frame offset: {frame_ofst:>4d}, frame byte offset in bitstream: {config_frame.byte_ofst}")
 
 def print_ff_info(
   bitlocator: BitLocator,
@@ -48,7 +48,7 @@ def print_ff_info(
   (slr_name, frame_addr, frame_ofst) = bitlocator.locate_reg(ff)
   print(f"{ff}")
   config_frame = slrNameFar_frame_dict[(slr_name, frame_addr)]
-  print(f"INIT -> {slr_name}, frame address: 0x{frame_addr.to_hex()} ({frame_addr}), frame offset: {frame_ofst:>4d}, frame byte ofst in bitstream: {config_frame.byte_ofst}")
+  print(f"INIT -> {slr_name}, frame address: 0x{frame_addr.to_hex()} ({frame_addr}), frame offset: {frame_ofst:>4d}, frame byte offset in bitstream: {config_frame.byte_ofst}")
 
 def print_bram_info(
   bitlocator: BitLocator,
@@ -59,10 +59,10 @@ def print_bram_info(
   print(f"{bram}")
   for (init_idx, (frame_addr, frame_ofst)) in enumerate(zip(content_frame_addrs, content_frame_ofsts)):
     config_frame = slrNameFar_frame_dict[(slr_name, frame_addr)]
-    print(f"INIT[{init_idx:>5d}] -> {slr_name}, frame address: 0x{frame_addr.to_hex()} ({frame_addr}), frame offset: {frame_ofst:>4d}, frame byte ofst in bitstream: {config_frame.byte_ofst}")
+    print(f"INIT[{init_idx:>5d}] -> {slr_name}, frame address: 0x{frame_addr.to_hex()} ({frame_addr}), frame offset: {frame_ofst:>4d}, frame byte offset in bitstream: {config_frame.byte_ofst}")
   for (init_idx, (frame_addr, frame_ofst)) in enumerate(zip(parity_frame_addrs, parity_frame_ofsts)):
     config_frame = slrNameFar_frame_dict[(slr_name, frame_addr)]
-    print(f"INIT_P[{init_idx:>5d}] -> {slr_name}, frame address: 0x{frame_addr.to_hex()} ({frame_addr}), frame offset: {frame_ofst:>4d}, frame byte ofst in bitstream: {config_frame.byte_ofst}")
+    print(f"INIT_P[{init_idx:>5d}] -> {slr_name}, frame address: 0x{frame_addr.to_hex()} ({frame_addr}), frame offset: {frame_ofst:>4d}, frame byte offset in bitstream: {config_frame.byte_ofst}")
 
 
 # Main program (if executed as script)
